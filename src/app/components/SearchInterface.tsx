@@ -77,6 +77,14 @@ export default function SearchInterface() {
     } catch (error) {
       console.error('Search failed:', error);
       
+      // Get more detailed error message
+      let errorMessage = 'Sorry, I encountered an error while processing your request. Please try again.';
+      if (error instanceof Error) {
+        errorMessage = `Error: ${error.message}`;
+      } else if (typeof error === 'string') {
+        errorMessage = `Error: ${error}`;
+      }
+      
       setMessages(prev => [...prev, 
         {
           type: 'user',
@@ -85,7 +93,7 @@ export default function SearchInterface() {
         }, 
         {
           type: 'assistant',
-          content: 'Sorry, I encountered an error while processing your request. Please try again.',
+          content: errorMessage,
           timestamp: new Date().toISOString()
         }
       ]);
