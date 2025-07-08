@@ -24,7 +24,7 @@ This update addresses 504 Gateway Timeout errors during search requests by:
 ## Environment Updates Required:
 
 ```
-SEARCH_TIMEOUT=25000
+SEARCH_TIMEOUT=60000
 MAX_RESULTS_PER_SOURCE=8
 ```
 
