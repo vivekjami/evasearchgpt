@@ -176,58 +176,122 @@ ${sourcesText}`;
     results: SearchResult[],
     intent: QueryIntent
   ): string[] {
+    // Extract the key topic once to keep it consistent
+    const keyTopic = this.extractKeyTopic(query);
+    
+    // Don't repeat the original query in follow-up questions
+    const isQueryAboutLatestDevelopments = 
+      query.toLowerCase().includes('latest') || 
+      query.toLowerCase().includes('developments') ||
+      query.toLowerCase().includes('recent') ||
+      query.toLowerCase().includes('breakthroughs');
+    
     const templates = {
       research: [
-        `What are the latest developments in ${this.extractKeyTopic(query)}?`,
-        `How does ${this.extractKeyTopic(query)} compare to alternatives?`,
-        `What are the practical applications of ${this.extractKeyTopic(query)}?`,
-        `What are the limitations or challenges of ${this.extractKeyTopic(query)}?`
+        isQueryAboutLatestDevelopments 
+          ? `What are the major challenges facing ${keyTopic}?` 
+          : `What are the latest developments in ${keyTopic}?`,
+        `How does ${keyTopic} compare to traditional approaches?`,
+        `What are the practical applications of ${keyTopic}?`,
+        `What is the future outlook for ${keyTopic}?`
       ],
       
       technical: [
-        `What are the best practices for ${this.extractKeyTopic(query)}?`,
-        `How do I troubleshoot common issues with ${this.extractKeyTopic(query)}?`,
-        `What are advanced techniques for ${this.extractKeyTopic(query)}?`,
-        `Which tools are recommended for ${this.extractKeyTopic(query)}?`
+        `What are the best practices for implementing ${keyTopic}?`,
+        `How can I optimize ${keyTopic} for better performance?`,
+        `What common issues might arise when working with ${keyTopic}?`,
+        `Which tools are recommended for working with ${keyTopic}?`
       ],
       
       shopping: [
-        `What are the top-rated alternatives to ${this.extractKeyTopic(query)}?`,
-        `Where can I find the best deals on ${this.extractKeyTopic(query)}?`,
-        `What should I consider before buying ${this.extractKeyTopic(query)}?`,
-        `What are user reviews saying about ${this.extractKeyTopic(query)}?`
+        `What are the top alternatives to consider for ${keyTopic}?`,
+        `How do different brands of ${keyTopic} compare?`,
+        `What features should I prioritize when choosing ${keyTopic}?`,
+        `What's the price range for high-quality ${keyTopic}?`
       ],
       
       news: [
-        `What are the implications of ${this.extractKeyTopic(query)}?`,
-        `How has ${this.extractKeyTopic(query)} evolved over time?`,
-        `What do experts predict about ${this.extractKeyTopic(query)}?`,
-        `What are related developments to ${this.extractKeyTopic(query)}?`
+        `What are the broader implications of ${keyTopic}?`,
+        `How has ${keyTopic} evolved over the past year?`,
+        `What might be the next developments in ${keyTopic}?`,
+        `How are different industries responding to ${keyTopic}?`
       ],
       
       general: [
-        `Can you explain more about ${this.extractKeyTopic(query)}?`,
-        `What are some examples of ${this.extractKeyTopic(query)}?`,
-        `How does ${this.extractKeyTopic(query)} work?`,
-        `What are the benefits of ${this.extractKeyTopic(query)}?`
+        `What are the key benefits of ${keyTopic}?`,
+        `How is ${keyTopic} typically implemented or used?`,
+        `What are common misconceptions about ${keyTopic}?`,
+        `How might ${keyTopic} evolve in the future?`
       ]
     };
     
-    const questions = templates[intent] || templates.general;
+    // Look at search results for additional context
+    let additionalQuestions: string[] = [];
+    if (results && results.length > 0) {
+      // Extract potentially interesting topics from titles
+      const titles = results.map(r => r.title || '');
+      
+      // Look for years/dates to ask about timeline
+      const hasYearMentions = titles.some(t => /\b20\d\d\b/.test(t));
+      if (hasYearMentions && !query.toLowerCase().includes('history')) {
+        additionalQuestions.push(`What is the history and evolution of ${keyTopic}?`);
+      }
+      
+      // Look for comparisons
+      const hasComparisons = titles.some(t => /\b(vs|versus|compared|against)\b/i.test(t));
+      if (hasComparisons) {
+        additionalQuestions.push(`What are the key differences between competing ${keyTopic} approaches?`);
+      }
+      
+      // Look for applications
+      const hasApplications = titles.some(t => /\b(use|using|application|applied|implement)\b/i.test(t));
+      if (hasApplications) {
+        additionalQuestions.push(`What are some real-world examples of ${keyTopic} in action?`);
+      }
+    }
     
     // Add domain-specific questions based on results
     const domainQuestions = this.generateDomainSpecificQuestions(results);
     
-    return [...questions.slice(0, 3), ...domainQuestions].slice(0, 4);
+    // Combine all questions, prioritizing additional context-aware ones
+    const baseQuestions = templates[intent] || templates.general;
+    const allQuestions = [
+      ...baseQuestions.slice(0, 2), 
+      ...additionalQuestions,
+      ...domainQuestions,
+      ...baseQuestions.slice(2)
+    ];
+    
+    // Return 3 unique questions
+    return [...new Set(allQuestions)].slice(0, 3);
   }
   
   private static extractKeyTopic(query: string): string {
-    // Simple keyword extraction - could be enhanced with NLP
-    const stopWords = ['what', 'how', 'why', 'when', 'where', 'is', 'are', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+    // Enhanced keyword extraction with phrase preservation
+    const stopWords = [
+      'what', 'how', 'why', 'when', 'where', 'is', 'are', 'tell', 'me', 'about',
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 
+      'with', 'by', 'latest', 'best', 'top', 'news', 'explain', 'describe', 
+      'works', 'does', 'do', 'can', 'could', 'would', 'should'
+    ];
+    
+    // First remove common question patterns
+    let cleanedQuery = query
+      .replace(/^(what is|what are|how does|how to|tell me about|explain|describe)/gi, '')
+      .trim();
+    
+    // If after removing patterns we have a good phrase, use it
+    if (cleanedQuery.split(' ').length >= 2) {
+      return cleanedQuery;
+    }
+    
+    // Otherwise, fall back to more aggressive filtering
     const words = query.toLowerCase().split(/\s+/).filter(word => !stopWords.includes(word));
     
-    // Return the most meaningful words
-    return words.slice(0, 3).join(' ') || 'this topic';
+    // Try to preserve noun phrases by keeping adjacent words
+    const topicPhrase = words.slice(0, 4).join(' ');
+    
+    return topicPhrase || 'this topic';
   }
   
   private static generateDomainSpecificQuestions(results: SearchResult[]): string[] {
