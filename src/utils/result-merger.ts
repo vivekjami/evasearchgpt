@@ -176,7 +176,6 @@ function getSourceWeight(source: string): number {
   const weights: Record<string, number> = {
     'brave': 85,
     'serpapi': 90,
-    'bing': 80,
   };
   
   return weights[source] || 50;

@@ -3,9 +3,9 @@ import { z } from 'zod';
 // Environment validation schema
 export const envSchema = z.object({
   GEMINI_API_KEY: z.string().min(1, 'Gemini API key is required'),
-  BRAVE_API_KEY: z.string().min(1, 'Brave API key is required'),
+  BRAVE_RAPIDAPI_KEY: z.string().min(1, 'Brave RapidAPI key is required'),
+  BRAVE_RAPIDAPI_HOST: z.string().min(1, 'Brave RapidAPI host is required'),
   SERPAPI_KEY: z.string().min(1, 'SerpAPI key is required'),
-  BING_API_KEY: z.string().min(1, 'Bing API key is required'),
   NEXT_PUBLIC_APP_URL: z.string().url(),
   SEARCH_TIMEOUT: z.string().transform(Number).default('10000'),
   MAX_RESULTS_PER_SOURCE: z.string().transform(Number).default('10'),
@@ -30,7 +30,7 @@ export const searchResultSchema = z.object({
   title: z.string(),
   url: z.string().url(),
   snippet: z.string(),
-  source: z.enum(['brave', 'serpapi', 'bing']),
+  source: z.enum(['brave', 'serpapi']),
   relevanceScore: z.number().min(0).max(100),
   publishedDate: z.string().optional(),
   imageUrl: z.string().url().optional(),

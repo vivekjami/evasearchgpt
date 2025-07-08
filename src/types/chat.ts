@@ -1,10 +1,10 @@
 import { SearchResult } from './search';
 
 export interface ChatMessage {
-  id: string;
+  id?: string;
   type: 'user' | 'assistant' | 'system';
   content: string;
-  timestamp: Date;
+  timestamp: string | Date;
   sources?: SearchResult[];
   followUpQuestions?: string[];
   confidence?: number;

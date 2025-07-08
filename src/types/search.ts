@@ -3,7 +3,7 @@ export interface SearchResult {
   title: string;
   url: string;
   snippet: string;
-  source: 'brave' | 'serpapi' | 'bing';
+  source: 'brave' | 'serpapi';
   relevanceScore: number;
   publishedDate?: string;
   imageUrl?: string;

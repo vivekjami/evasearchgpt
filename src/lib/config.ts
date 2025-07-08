@@ -5,9 +5,9 @@ function validateEnv() {
   try {
     return envSchema.parse({
       GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-      BRAVE_API_KEY: process.env.BRAVE_API_KEY,
+      BRAVE_RAPIDAPI_KEY: process.env.BRAVE_RAPIDAPI_KEY,
+      BRAVE_RAPIDAPI_HOST: process.env.BRAVE_RAPIDAPI_HOST,
       SERPAPI_KEY: process.env.SERPAPI_KEY,
-      BING_API_KEY: process.env.BING_API_KEY,
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
       SEARCH_TIMEOUT: process.env.SEARCH_TIMEOUT,
       MAX_RESULTS_PER_SOURCE: process.env.MAX_RESULTS_PER_SOURCE,
@@ -22,9 +22,9 @@ function validateEnv() {
 export const config = {
   // API Keys
   geminiApiKey: process.env.GEMINI_API_KEY || '',
-  braveApiKey: process.env.BRAVE_API_KEY || '',
+  braveRapidApiKey: process.env.BRAVE_RAPIDAPI_KEY || '',
+  braveRapidApiHost: process.env.BRAVE_RAPIDAPI_HOST || '',
   serpApiKey: process.env.SERPAPI_KEY || '',
-  bingApiKey: process.env.BING_API_KEY || '',
   
   // Application
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
@@ -40,7 +40,6 @@ export const config = {
   rateLimits: {
     brave: { requests: 2000, period: 'month' },
     serpapi: { requests: 100, period: 'month' },
-    bing: { requests: 1000, period: 'month' },
     gemini: { requests: 15, period: 'minute' },
   },
   
