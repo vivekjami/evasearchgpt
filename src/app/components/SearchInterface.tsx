@@ -6,6 +6,7 @@ import { AIResponse } from '@/types/search';
 import { ChatMessage as ChatMessageType } from '@/types/chat';
 import ChatMessage from '@/app/components/ChatMessage';
 import SearchHints from '@/app/components/SearchHints';
+import LoadingIndicator from '@/app/components/LoadingIndicator';
 
 export default function SearchInterface() {
   const [query, setQuery] = useState('');
@@ -90,26 +91,38 @@ export default function SearchInterface() {
       
       // Get more detailed error message
       let errorMessage = 'Sorry, I encountered an error while processing your request. Please try again.';
+      let errorTitle = 'Error';
+      let errorSuggestion = 'Please try again with a different query or contact support if the issue persists.';
+      
       if (error instanceof Error) {
-        errorMessage = `Error: ${error.message}`;
+        // Extract the error message
+        errorMessage = error.message;
         
         // Add troubleshooting information for different errors
         if (error.message.includes('500')) {
-          errorMessage += '\n\nTroubleshooting: This might be caused by missing API keys on the server. Please check if all API keys are correctly set in the environment variables.';
-          
-          // Add link to the config endpoint
-          errorMessage += '\n\nYou can check API configuration status at: /api/config or /api/healthcheck';
+          errorTitle = 'Server Configuration Error';
+          errorMessage = 'The search service is missing required configuration.';
+          errorSuggestion = 'This is likely due to missing API keys on the server. Please check environment variables or contact support.';
         } else if (error.message.includes('504')) {
-          errorMessage += '\n\nTroubleshooting: The search request timed out. This might happen when:';
-          errorMessage += '\n- External search APIs are responding slowly';
-          errorMessage += '\n- Your query is very complex and requires more processing time';
-          errorMessage += '\n- The server is experiencing high load';
-          
-          errorMessage += '\n\nTry again with a simpler query or try again later.';
+          errorTitle = 'Search Timeout';
+          errorMessage = 'Your search request took too long to process.';
+          errorSuggestion = 'Try again with a more specific query, or break your question into smaller parts. Our search APIs might be experiencing high demand right now.';
+        } else if (error.message.includes('429')) {
+          errorTitle = 'Rate Limit Exceeded';
+          errorMessage = 'You\'ve made too many requests in a short period.';
+          errorSuggestion = 'Please wait a moment before trying again. This helps us ensure fair usage for all users.';
+        } else if (error.message.includes('400')) {
+          errorTitle = 'Invalid Request';
+          errorMessage = 'Your search query couldn\'t be processed.';
+          errorSuggestion = 'Try reformulating your question or using different keywords.';
         }
       } else if (typeof error === 'string') {
-        errorMessage = `Error: ${error}`;
+        errorMessage = error;
       }
+      
+      // Format the error message nicely
+      const formattedErrorMessage = `## ${errorTitle}\n\n${errorMessage}\n\n**Suggestion:** ${errorSuggestion}`;
+      
       
       setMessages(prev => [...prev, 
         {
@@ -119,8 +132,9 @@ export default function SearchInterface() {
         }, 
         {
           type: 'assistant',
-          content: errorMessage,
-          timestamp: new Date().toISOString()
+          content: formattedErrorMessage,
+          timestamp: new Date().toISOString(),
+          isError: true
         }
       ]);
     } finally {
@@ -205,21 +219,8 @@ export default function SearchInterface() {
         <div ref={messagesEndRef} />
       </div>
       
-      {/* Loading State */}
-      {isLoading && (
-        <motion.div 
-          className="text-center p-8 rounded-lg shadow-sm bg-white/50 backdrop-blur-sm my-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <div className="flex flex-col items-center justify-center">
-            <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"></div>
-            <p className="mt-4 text-gray-600">Searching multiple sources...</p>
-            <div className="mt-2 text-xs text-gray-400">This may take a few seconds</div>
-          </div>
-        </motion.div>
-      )}
+      {/* Loading State with enhanced progress indicator */}
+      <LoadingIndicator isLoading={isLoading} query={query || ''} />
       
       {/* Empty State */}
       {messages.length === 0 && !isLoading && (

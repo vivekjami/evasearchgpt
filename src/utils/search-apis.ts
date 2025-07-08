@@ -77,7 +77,7 @@ function transformSerpResult(result: SerpSearchResult, index: number): SearchRes
 // Bing transform function removed as Bing search is not available
 
 // Brave Search API via RapidAPI
-export async function searchBrave(query: string): Promise<SearchApiResponse> {
+export async function searchBrave(query: string, signal?: AbortSignal): Promise<SearchApiResponse> {
   const startTime = Date.now();
   
   try {
@@ -88,14 +88,15 @@ export async function searchBrave(query: string): Promise<SearchApiResponse> {
     const response = await axios.get(`https://${config.braveRapidApiHost}/search`, {
       params: {
         q: query,
-        count: config.maxResultsPerSource,
+        count: Math.min(config.maxResultsPerSource, 5), // Limit results for faster response
       },
       headers: {
         'x-rapidapi-host': config.braveRapidApiHost,
         'x-rapidapi-key': config.braveRapidApiKey,
         'User-Agent': 'EvaSearchGPT/1.0',
       },
-      timeout: config.searchTimeout,
+      timeout: 12000, // Hard-coded shorter timeout for reliability
+      signal: signal, // Support for AbortController
     });
 
     const results = response.data.results || response.data.web?.results || [];
@@ -122,7 +123,7 @@ export async function searchBrave(query: string): Promise<SearchApiResponse> {
 }
 
 // SerpAPI Search
-export async function searchSerpAPI(query: string): Promise<SearchApiResponse> {
+export async function searchSerpAPI(query: string, signal?: AbortSignal): Promise<SearchApiResponse> {
   const startTime = Date.now();
   
   try {
@@ -135,12 +136,13 @@ export async function searchSerpAPI(query: string): Promise<SearchApiResponse> {
         q: query,
         engine: 'google',
         api_key: config.serpApiKey,
-        num: config.maxResultsPerSource,
+        num: Math.min(config.maxResultsPerSource, 5), // Limit results for faster response
         hl: 'en',
         gl: 'us',
         safe: 'active',
       },
-      timeout: config.searchTimeout,
+      timeout: 12000, // Hard-coded shorter timeout for reliability
+      signal: signal, // Support for AbortController
     });
 
     const results = response.data.organic_results || [];
