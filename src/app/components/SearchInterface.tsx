@@ -93,12 +93,19 @@ export default function SearchInterface() {
       if (error instanceof Error) {
         errorMessage = `Error: ${error.message}`;
         
-        // Add troubleshooting information for 500 errors
+        // Add troubleshooting information for different errors
         if (error.message.includes('500')) {
           errorMessage += '\n\nTroubleshooting: This might be caused by missing API keys on the server. Please check if all API keys are correctly set in the environment variables.';
           
           // Add link to the config endpoint
           errorMessage += '\n\nYou can check API configuration status at: /api/config or /api/healthcheck';
+        } else if (error.message.includes('504')) {
+          errorMessage += '\n\nTroubleshooting: The search request timed out. This might happen when:';
+          errorMessage += '\n- External search APIs are responding slowly';
+          errorMessage += '\n- Your query is very complex and requires more processing time';
+          errorMessage += '\n- The server is experiencing high load';
+          
+          errorMessage += '\n\nTry again with a simpler query or try again later.';
         }
       } else if (typeof error === 'string') {
         errorMessage = `Error: ${error}`;

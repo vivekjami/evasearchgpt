@@ -48,14 +48,49 @@ export async function POST(request: NextRequest) {
     const validatedQuery = searchQuerySchema.parse(body);
     const { query } = validatedQuery;
     
-    // Execute searches in parallel
+    // Execute searches in parallel with individual timeouts
     const searchTimer = PerformanceMonitor.startTimer('search_api_external_calls');
-    const searchPromises = [
-      searchBrave(query),
-      searchSerpAPI(query),
-    ];
     
+    // Create a timeout promise for each search
+    const timeoutDuration = config.searchTimeout;
+    const createTimeoutPromise = (source: string) => {
+      return new Promise<any>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Search timed out for ${source}`));
+        }, timeoutDuration);
+      });
+    };
+    
+    // Execute searches with individual timeouts
+    const braveSearchPromise = Promise.race([
+      searchBrave(query),
+      createTimeoutPromise('Brave')
+    ]).catch(error => ({
+      results: [],
+      totalResults: 0,
+      processingTime: 0,
+      source: 'brave',
+      success: false,
+      error: error.message || 'Brave search failed',
+    }));
+    
+    const serpSearchPromise = Promise.race([
+      searchSerpAPI(query),
+      createTimeoutPromise('SerpAPI')
+    ]).catch(error => ({
+      results: [],
+      totalResults: 0,
+      processingTime: 0,
+      source: 'serpapi',
+      success: false,
+      error: error.message || 'SerpAPI search failed',
+    }));
+    
+    // Use Promise.allSettled to handle both promises
+    const searchPromises = [braveSearchPromise, serpSearchPromise];
     const responses = await Promise.allSettled(searchPromises);
+    
+    // Process responses
     const apiResponses = responses.map(result => 
       result.status === 'fulfilled' ? result.value : {
         results: [],
@@ -66,26 +101,6 @@ export async function POST(request: NextRequest) {
         error: result.reason?.message || 'Search failed',
       }
     );
-    
-    // When Brave API subscription is active, use this code instead:
-    /*
-    const searchPromises = [
-      searchBrave(query),
-      searchSerpAPI(query),
-    ];
-    
-    const responses = await Promise.allSettled(searchPromises);
-    const apiResponses = responses.map(result => 
-      result.status === 'fulfilled' ? result.value : {
-        results: [],
-        totalResults: 0,
-        processingTime: 0,
-        source: 'unknown',
-        success: false,
-        error: result.reason?.message || 'Search failed',
-      }
-    );
-    */
     searchTimer(true, { sourcesCount: apiResponses.length });
     
     // Merge and deduplicate results
@@ -142,9 +157,32 @@ export async function POST(request: NextRequest) {
     console.error('Search API error:', error);
     perfTimer(false, { error: error instanceof Error ? error.message : 'Unknown error' });
     
+    // More detailed error messaging based on the type of error
+    let statusCode = 500;
+    let errorMessage = 'Search failed';
+    let errorDetails = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Check for timeout errors specifically
+    if (errorDetails.includes('timeout') || errorDetails.includes('timed out')) {
+      statusCode = 504;
+      errorMessage = 'Search request timed out';
+      errorDetails = 'The search APIs took too long to respond. Try again with a simpler query or check if the search services are experiencing high load.';
+    }
+    
+    // Check for missing API keys
+    if (errorDetails.includes('API key') || errorDetails.includes('required API keys')) {
+      statusCode = 500;
+      errorMessage = 'API configuration error';
+      errorDetails = 'Missing or invalid API keys. Please check the environment configuration.';
+    }
+    
     return NextResponse.json(
-      { error: 'Search failed', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+      { 
+        error: errorMessage, 
+        details: errorDetails,
+        timestamp: new Date().toISOString()
+      },
+      { status: statusCode }
     );
   }
 }
