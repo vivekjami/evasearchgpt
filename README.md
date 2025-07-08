@@ -89,10 +89,51 @@ Traditional search gives you links. EvaSearchGPT gives you **answers**. By fusin
 - **SerpAPI** (Free tier)
 - **Bing Search API** (Free tier)
 
-### Deployment
-- **Vercel** (Frontend + API)
-- **Upstash Redis** (Rate limiting)
-- **Vercel Analytics** (Performance monitoring)
+### 🚀 Deployment
+
+#### Production Deployment (Vercel - Recommended)
+
+**Prerequisites:**
+- Vercel account
+- API keys for all search services
+- Domain name (optional)
+
+**Steps:**
+
+1. **Install Vercel CLI:**
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Deploy to preview environment:**
+   ```bash
+   npm run deploy:preview
+   ```
+
+3. **Deploy to production:**
+   ```bash
+   npm run deploy
+   ```
+
+4. **Configure environment variables in Vercel dashboard:**
+   - `GEMINI_API_KEY` - Your Google AI API key
+   - `BRAVE_API_KEY` - Your Brave Search API key  
+   - `SERPAPI_KEY` - Your SerpAPI key
+   - `NEXT_PUBLIC_APP_URL` - Your production URL
+   - `NODE_ENV=production`
+
+5. **Optional: Add custom domain in Vercel settings**
+
+**Alternative Platforms:**
+- **Netlify** (with serverless functions)
+- **Railway** (with automatic deployments)
+- **Render** (with zero-config deployment)
+- **AWS Amplify** (with CI/CD pipeline)
+
+#### Health Monitoring
+- Health endpoint: `/api/health`
+- Analytics endpoint: `/api/analytics`  
+- Performance dashboard: `/analytics`
 
 ##  User Stories
 
