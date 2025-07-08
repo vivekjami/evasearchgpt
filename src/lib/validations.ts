@@ -10,6 +10,15 @@ export const envSchema = z.object({
   SEARCH_TIMEOUT: z.string().transform(Number).default('10000'),
   MAX_RESULTS_PER_SOURCE: z.string().transform(Number).default('10'),
   CACHE_DURATION: z.string().transform(Number).default('3600'),
+  USE_SIMPLIFIED_PROMPT: z.union([
+    z.string().transform(val => val === 'true'),
+    z.boolean()
+  ]).default(false),
+  GEMINI_MODEL: z.string().default('gemini-2.5-pro'),
+  GEMINI_MAX_TOKENS: z.union([
+    z.string().transform(Number),
+    z.number()
+  ]).default(1000),
 });
 
 // Runtime API validation (stricter validation for API routes)

@@ -24,7 +24,7 @@ function validateRuntimeEnv() {
 
 // Initialize the Google AI client
 const genAI = new GoogleGenerativeAI(config.geminiApiKey);
-const geminiModelName = 'gemini-2.5-pro'; // Updated model name
+const geminiModelName = config.geminiModel || 'gemini-2.5-pro';
 
 // Artificially cap the number of results to process for reliability
 const MAX_RESULTS_TO_PROCESS = 5;
@@ -170,66 +170,131 @@ ${result.publishedDate ? `Published: ${result.publishedDate}` : ''}
 ---`;
     }).join('\n\n');
     
-    const directPrompt = `Answer the following query based on the provided sources:
+    // Create a simplified prompt if configured, otherwise use the detailed one
+    let directPrompt = '';
     
-Query: "${query}"
+    if (config.useSimplifiedPrompt) {
+      // Simplified prompt for challenging environments
+      directPrompt = `Answer this question: "${query}"
+      
+Here's information from search results:
+${limitedResults.map((r, i) => `[${i+1}] ${r.snippet}`).join('\n\n')}
 
-Sources:
+Write a clear, comprehensive answer citing sources as [1], [2], etc.`;
+    } else {
+      // More structured, detailed prompt
+      directPrompt = `You're a helpful search assistant. Answer this query using only the provided sources:
+
+QUERY: "${query}"
+
+SEARCH RESULTS:
 ${sourcesText}
 
-Instructions:
-1. Directly answer the query using information from the sources
-2. Synthesize the information into a coherent, comprehensive answer
-3. Cite sources using [1], [2], etc.
-4. If sources don't contain enough information, clearly state what is based on your general knowledge
-5. Write in a clear, helpful tone
-6. Provide a complete answer - don't leave information out!
+INSTRUCTIONS:
+- Start with a direct answer to the query
+- Use information ONLY from the sources provided
+- Synthesize a comprehensive answer
+- Cite sources with numbered references [1], [2], etc.
+- If sources are insufficient, clearly say so
+- Use Markdown formatting for readability
+- Write at least 150 words
 
-Your response should be at least 150 words.`;
+FORMAT YOUR RESPONSE LIKE THIS:
+## Answer
+[Your comprehensive answer with source citations]
+
+## Sources Used
+- [1] Source name and details
+- [2] Source name and details
+...`;
+    }
     
     // Set a timeout for AI response generation
     let aiResponse = "I couldn't find specific information about your query due to timing constraints. Please try a more specific question.";
     
     try {
-      // Get the model with simplified configuration
+      // Get the model with configuration from config
       const model = genAI.getGenerativeModel({ 
         model: geminiModelName,
         generationConfig: {
-          maxOutputTokens: 1000,  // Increased token limit for more comprehensive responses
-          temperature: 0.3,       // Balanced between creative and factual
-          topP: 0.95,             // High probability mass
-          topK: 40                // Diverse token selection
-        }
+          maxOutputTokens: config.geminiMaxTokens || 1000,  
+          temperature: 0.3,        // Balanced between creative and factual
+          topP: 0.95,              // High probability mass
+          topK: 40,                // Diverse token selection
+          stopSequences: ["Source:"] // Prevent the model from generating fake sources
+        },
+        // No system instruction for basic model
       });
       
       console.log("Sending request to Gemini API...");
       
-      // Direct approach without extra Promise wrappers
+      // Direct approach with better error handling and timeouts
       try {
-        // First attempt with complete request
-        const result = await model.generateContent(directPrompt);
+        console.log("Attempting Gemini API call with API key:", process.env.GEMINI_API_KEY ? "Key is present" : "Key is missing");
+        
+        // Use Promise.race with a timeout to avoid long-running requests
+        const geminiPromise = model.generateContent(directPrompt);
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Gemini API timeout after 30 seconds')), 30000);
+        });
+        
+        // Race between the actual API call and the timeout
+        const result = await Promise.race([geminiPromise, timeoutPromise]) as any;
+        
+        // Log the raw response for debugging
+        console.log("Gemini API raw response structure:", JSON.stringify({
+          hasResponse: !!result?.response,
+          responseType: result?.response ? typeof result.response : 'unknown',
+          hasText: !!result?.response?.text
+        }));
+        
         const response = await result.response;
         aiResponse = response.text();
-        console.log("Gemini API response received successfully.");
+        
+        // Log success with snippet
+        const responsePreview = aiResponse.substring(0, 100) + "...";
+        console.log(`Gemini API success. Response starts with: ${responsePreview}`);
       } catch (initialError) {
         console.error("Initial Gemini API call failed:", initialError);
+        console.error("Error details:", JSON.stringify({
+          message: initialError instanceof Error ? initialError.message : String(initialError),
+          name: initialError instanceof Error ? initialError.name : 'Unknown',
+          stack: initialError instanceof Error && initialError.stack 
+            ? initialError.stack.split('\n').slice(0, 3).join('\n') 
+            : 'No stack trace'
+        }));
         
-        // Fallback to a simpler prompt if the first attempt fails
+        // Fallback to a simpler prompt with shorter context
         try {
-          const simplifiedPrompt = `Answer this question: "${query}" based on these snippets:\n\n${limitedResults.map(r => r.snippet).join('\n\n')}`;
+          const simplifiedPrompt = `Answer this question clearly and directly: "${query}". 
+          
+Use these search snippets for information:
+${limitedResults.slice(0, 3).map(r => `- ${r.snippet}`).join('\n\n')}
+
+Keep your answer factual and to the point.`;
+          
+          console.log("Attempting fallback Gemini API call with simplified prompt");
           const fallbackResult = await model.generateContent(simplifiedPrompt);
           const fallbackResponse = await fallbackResult.response;
           aiResponse = fallbackResponse.text();
-          console.log("Fallback Gemini API response received.");
+          console.log("Fallback Gemini API response successful");
         } catch (fallbackError) {
           console.error("Fallback Gemini API call also failed:", fallbackError);
-          aiResponse = `Based on the search results about "${query}", here are some key points:
+          console.error("Fallback error details:", JSON.stringify({
+            message: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+            name: fallbackError instanceof Error ? fallbackError.name : 'Unknown'
+          }));
           
-- ${limitedResults[0]?.title || 'Recent research'}
-- ${limitedResults[1]?.title || 'New developments'}
-- ${limitedResults[2]?.title || 'Important findings'}
+          // Provide a structured fallback response based on search results
+          aiResponse = `## Search Results for "${query}"
 
-For more details, please check the sources provided and try a more specific question.`;
+Based on the search results, here are some key findings:
+
+${limitedResults.slice(0, 3).map((result, i) => (
+  `### ${result.title || `Source ${i+1}`}\n${result.snippet || 'No description available.'}`
+)).join('\n\n')}
+
+For more detailed information, please refer to the sources provided below.`;
         }
       }
     } catch (aiError) {
@@ -255,6 +320,30 @@ For more details, please check the sources provided and try a more specific ques
       quality: quality.quality,
     });
     
+    // Log the final response data for debugging
+    console.log("Search API response summary:", {
+      answerLength: aiResponse.length,
+      answerPreview: aiResponse.substring(0, 50) + "...",
+      sourcesCount: mergedResults.length,
+      followUpQuestionsCount: followUpQuestions.length,
+      processingTimeMs: totalTime,
+      geminiApiKeyPresent: Boolean(process.env.GEMINI_API_KEY),
+    });
+    
+    // Verify the AI response is valid before sending
+    if (!aiResponse || aiResponse.trim().length < 20) {
+      console.error("Generated AI response is empty or too short:", aiResponse);
+      
+      // Provide a fallback answer using search results directly
+      aiResponse = `# Search Results for "${query}"
+
+I found the following information related to your query:
+
+${mergedResults.slice(0, 3).map((result, i) => (
+  `## ${result.title || `Source ${i+1}`}\n${result.snippet || 'No description available.'}\n\nSource: ${result.url}`
+)).join('\n\n')}`;
+    }
+    
     return NextResponse.json({
       answer: aiResponse,
       sources: mergedResults.slice(0, 6),
@@ -262,6 +351,13 @@ For more details, please check the sources provided and try a more specific ques
       confidence: quality.confidence,
       processingTime: totalTime,
       queryIntent: detectedIntent,
+      debug: {
+        timestamp: new Date().toISOString(),
+        answeredBy: 'gemini-2.5-pro',
+        sourcesUsed: apiResponses.filter(r => r.success).map(r => r.source),
+        hasValidGeminiResponse: aiResponse.length > 50,
+        geminiApiConfigured: Boolean(process.env.GEMINI_API_KEY)
+      }
     });
     
   } catch (error) {

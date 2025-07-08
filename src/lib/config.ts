@@ -12,6 +12,9 @@ function validateEnv() {
       SEARCH_TIMEOUT: process.env.SEARCH_TIMEOUT,
       MAX_RESULTS_PER_SOURCE: process.env.MAX_RESULTS_PER_SOURCE,
       CACHE_DURATION: process.env.CACHE_DURATION,
+      USE_SIMPLIFIED_PROMPT: process.env.USE_SIMPLIFIED_PROMPT,
+      GEMINI_MODEL: process.env.GEMINI_MODEL,
+      GEMINI_MAX_TOKENS: process.env.GEMINI_MAX_TOKENS,
     });
   } catch (error) {
     console.warn('Environment validation warning:', error);
@@ -25,6 +28,9 @@ function validateEnv() {
       SEARCH_TIMEOUT: 10000,
       MAX_RESULTS_PER_SOURCE: 10,
       CACHE_DURATION: 3600,
+      USE_SIMPLIFIED_PROMPT: false,
+      GEMINI_MODEL: 'gemini-2.5-pro',
+      GEMINI_MAX_TOKENS: 1000,
     };
   }
 }
@@ -48,6 +54,11 @@ export const config = {
   searchTimeout: parseInt(process.env.SEARCH_TIMEOUT || '10000'),
   maxResultsPerSource: parseInt(process.env.MAX_RESULTS_PER_SOURCE || '10'),
   cacheDuration: parseInt(process.env.CACHE_DURATION || '3600'),
+  
+  // AI configuration
+  useSimplifiedPrompt: validatedEnv.USE_SIMPLIFIED_PROMPT || false,
+  geminiModel: validatedEnv.GEMINI_MODEL || 'gemini-2.5-pro',
+  geminiMaxTokens: validatedEnv.GEMINI_MAX_TOKENS || 1000,
   
   // Rate limiting
   rateLimits: {
