@@ -30,7 +30,7 @@ const geminiModelName = 'gemini-2.5-pro'; // Updated model name
 const MAX_RESULTS_TO_PROCESS = 5;
 
 // Set a strict timeout for each external API call
-const API_TIMEOUT = 12000; // 12 seconds
+const API_TIMEOUT = 24000; // 24 seconds (doubled for better reliability)
 
 export async function POST(request: NextRequest) {
   const perfTimer = PerformanceMonitor.startTimer('search_api_total');
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
     try {
       // Create an abort controller for the AI request
       const aiController = new AbortController();
-      const aiTimeout = setTimeout(() => aiController.abort(), 10000); // 10 second timeout for AI
+      const aiTimeout = setTimeout(() => aiController.abort(), 20000); // 20 second timeout for AI (doubled)
       
       // Get the model with timeout protection
       const model = genAI.getGenerativeModel({ 
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
       const result = await Promise.race([
         model.generateContent(prompt),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("AI generation timed out")), 10000)
+          setTimeout(() => reject(new Error("AI generation timed out")), 20000) // 20 seconds (doubled)
         )
       ]);
       

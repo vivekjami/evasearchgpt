@@ -95,7 +95,7 @@ export async function searchBrave(query: string, signal?: AbortSignal): Promise<
         'x-rapidapi-key': config.braveRapidApiKey,
         'User-Agent': 'EvaSearchGPT/1.0',
       },
-      timeout: 12000, // Hard-coded shorter timeout for reliability
+      timeout: 24000, // Doubled timeout for better reliability
       signal: signal, // Support for AbortController
     });
 
@@ -141,7 +141,7 @@ export async function searchSerpAPI(query: string, signal?: AbortSignal): Promis
         gl: 'us',
         safe: 'active',
       },
-      timeout: 12000, // Hard-coded shorter timeout for reliability
+      timeout: 24000, // Doubled timeout for better reliability
       signal: signal, // Support for AbortController
     });
 
