@@ -14,8 +14,8 @@ Traditional search gives you links. EvaSearchGPT gives you **answers**. By fusin
 │                 │    │                 │    │                 │
 │ • Chat Interface│────│ • Query Router  │────│ • Brave Search  │
 │ • Result Display│    │ • LLM Processor │    │ • SerpAPI       │
-│ • Analytics UI  │    │ • Result Merger │    │ • Bing Search   │
-│ • Follow-ups    │    │ • Prompt Engine │    │ • Gemini API    │
+│ • Analytics UI  │    │ • Result Merger │    │ • Gemini API    │
+│ • Follow-ups    │    │ • Prompt Engine │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          │              ┌─────────────────┐              │

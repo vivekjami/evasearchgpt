@@ -43,5 +43,6 @@ export interface PerformanceMetric {
   duration: number;
   timestamp: string;
   success: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: Record<string, any>;
 }

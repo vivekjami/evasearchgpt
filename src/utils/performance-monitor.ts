@@ -5,10 +5,12 @@ export class PerformanceMonitor {
   private static readonly MAX_METRICS = 1000;
   
   // Start timing an operation
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static startTimer(operation: string): (success?: boolean, metadata?: Record<string, any>) => number {
     const start = performance.now();
     const startTime = new Date().toISOString();
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (success: boolean = true, metadata?: Record<string, any>) => {
       const duration = performance.now() - start;
       
@@ -227,6 +229,7 @@ export class ErrorTracker {
     }
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static sendErrorToService(errorInfo: any) {
     fetch('/api/analytics/errors', {
       method: 'POST',
