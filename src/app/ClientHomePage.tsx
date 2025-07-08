@@ -82,12 +82,13 @@ export default function ClientHomePage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.5 }}
+        className="mb-20" // Add margin bottom to make space for footer
       >
         <SearchInterface />
       </motion.main>
       
       <motion.footer 
-        className="absolute bottom-0 left-0 right-0 p-6 text-center text-gray-500 text-sm"
+        className="fixed bottom-0 left-0 right-0 p-6 text-center text-gray-500 text-sm bg-gradient-to-t from-white via-white to-transparent pb-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.8 }}

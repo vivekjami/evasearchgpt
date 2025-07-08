@@ -5,6 +5,44 @@ import { motion } from 'framer-motion';
 import { ChatMessage as ChatMessageType } from '@/types/chat';
 import { SearchResult } from '@/types/search';
 import SourceCard from '@/app/components/SourceCard';
+import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+
+// Confidence bar component to avoid inline styles
+const ConfidenceBar = ({ confidence }: { confidence: number }) => {
+  // Use classes instead of inline styles
+  const widthClasses = {
+    0: 'w-0',
+    10: 'w-[10%]',
+    20: 'w-[20%]',
+    30: 'w-[30%]',
+    40: 'w-[40%]',
+    50: 'w-[50%]',
+    60: 'w-[60%]',
+    70: 'w-[70%]',
+    80: 'w-[80%]',
+    90: 'w-[90%]',
+    100: 'w-full',
+  };
+
+  // Find the closest key in widthClasses
+  const getWidthClass = (value: number) => {
+    const keys = Object.keys(widthClasses).map(Number);
+    const closest = keys.reduce((prev, curr) => 
+      (Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev)
+    );
+    return widthClasses[closest as keyof typeof widthClasses];
+  };
+
+  return (
+    <div 
+      className={`bg-blue-600 h-1.5 rounded-full absolute top-0 left-0 ${getWidthClass(confidence)}`}
+      data-confidence={confidence}
+    />
+  );
+};
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -46,8 +84,15 @@ export default function ChatMessage({ message, onFollowUpClick }: ChatMessagePro
         transition={{ duration: 0.4 }}
       >
         {/* AI Response */}
-        <div className="prose max-w-none mb-4">
-          <p className="text-gray-900 whitespace-pre-line">{message.content}</p>
+        <div className="prose max-w-none mb-4 text-gray-900">
+          <div className="markdown-content">
+            <ReactMarkdown 
+              rehypePlugins={[rehypeSanitize, rehypeRaw]} 
+              remarkPlugins={[remarkGfm]}
+            >
+              {message.content}
+            </ReactMarkdown>
+          </div>
         </div>
         
         {/* Performance Metrics */}
@@ -79,10 +124,7 @@ export default function ChatMessage({ message, onFollowUpClick }: ChatMessagePro
                   <div className="flex items-center">
                     <span className="mr-2">Confidence:</span>
                     <div className="w-full max-w-[100px] bg-gray-200 rounded-full h-1.5 mr-2 relative overflow-hidden">
-                      <div 
-                        className={`bg-blue-600 h-1.5 rounded-full absolute top-0 left-0`} 
-                        style={{width: `${message.confidence}%`}}
-                      />
+                      <ConfidenceBar confidence={Math.round(message.confidence || 0)} />
                     </div>
                     <span>{Math.round(message.confidence)}%</span>
                   </div>
