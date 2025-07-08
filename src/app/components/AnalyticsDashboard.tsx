@@ -243,7 +243,7 @@ export default function AnalyticsDashboard() {
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                       >
                         {analytics.sourceDistribution?.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -292,7 +292,7 @@ export default function AnalyticsDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip formatter={(value) => `${value.toFixed(0)} ms`} />
+                      <Tooltip formatter={(value) => (typeof value === 'number' ? `${value.toFixed(0)} ms` : `${value} ms`)} />
                       <Legend />
                       <Line type="monotone" dataKey="avgTime" name="Response Time" stroke="#00C49F" activeDot={{ r: 8 }} />
                     </LineChart>
@@ -312,7 +312,7 @@ export default function AnalyticsDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis domain={[0, 100]} />
-                      <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
+                      <Tooltip formatter={(value) => (typeof value === 'number' ? `${value.toFixed(1)}%` : `${value}%`)} />
                       <Legend />
                       <Line type="monotone" dataKey="successRate" name="Success Rate" stroke="#0088FE" activeDot={{ r: 8 }} />
                     </LineChart>
