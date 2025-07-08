@@ -3,10 +3,26 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { searchBrave, searchSerpAPI } from '@/utils/search-apis';
 import { mergeSearchResults } from '@/utils/result-merger';
 import { PromptEngine } from '@/utils/prompt-engine';
+import { runtimeEnvSchema } from '@/lib/validations';
 import config from '@/lib/config';
 import { PerformanceMonitor } from '@/utils/performance-monitor';
 import { SearchResult } from '@/types/search';
 import { z } from 'zod';
+
+// Validate runtime environment (only when API is called)
+function validateRuntimeEnv() {
+  try {
+    return runtimeEnvSchema.parse({
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      BRAVE_RAPIDAPI_KEY: process.env.BRAVE_RAPIDAPI_KEY,
+      BRAVE_RAPIDAPI_HOST: process.env.BRAVE_RAPIDAPI_HOST,
+      SERPAPI_KEY: process.env.SERPAPI_KEY,
+    });
+  } catch (error) {
+    console.error('Runtime environment validation failed:', error);
+    throw new Error('Missing required API keys. Please check your environment configuration.');
+  }
+}
 
 // Initialize the Google AI client
 const genAI = new GoogleGenerativeAI(config.geminiApiKey);
@@ -28,6 +44,10 @@ export async function POST(request: NextRequest) {
   const perfTimer = PerformanceMonitor.startTimer('chat_api_total');
   
   try {
+    // Validate runtime environment
+    validateRuntimeEnv();
+    
+    // Parse request body
     // Parse and validate request
     const body = await request.json();
     

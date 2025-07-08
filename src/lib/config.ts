@@ -1,6 +1,6 @@
 import { envSchema } from './validations';
 
-// Validate environment variables
+// Validate environment variables (non-strict for build time)
 function validateEnv() {
   try {
     return envSchema.parse({
@@ -14,20 +14,33 @@ function validateEnv() {
       CACHE_DURATION: process.env.CACHE_DURATION,
     });
   } catch (error) {
-    console.error('Environment validation failed:', error);
-    throw new Error('Invalid environment configuration');
+    console.warn('Environment validation warning:', error);
+    // Return default values instead of throwing
+    return {
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+      BRAVE_RAPIDAPI_KEY: process.env.BRAVE_RAPIDAPI_KEY || '',
+      BRAVE_RAPIDAPI_HOST: process.env.BRAVE_RAPIDAPI_HOST || '',
+      SERPAPI_KEY: process.env.SERPAPI_KEY || '',
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || '',
+      SEARCH_TIMEOUT: 10000,
+      MAX_RESULTS_PER_SOURCE: 10,
+      CACHE_DURATION: 3600,
+    };
   }
 }
 
+// Only validate environment during build time if we're not in CI
+const validatedEnv = validateEnv();
+
 export const config = {
   // API Keys
-  geminiApiKey: process.env.GEMINI_API_KEY || '',
-  braveRapidApiKey: process.env.BRAVE_RAPIDAPI_KEY || '',
-  braveRapidApiHost: process.env.BRAVE_RAPIDAPI_HOST || '',
-  serpApiKey: process.env.SERPAPI_KEY || '',
+  geminiApiKey: validatedEnv.GEMINI_API_KEY || process.env.GEMINI_API_KEY || '',
+  braveRapidApiKey: validatedEnv.BRAVE_RAPIDAPI_KEY || process.env.BRAVE_RAPIDAPI_KEY || '',
+  braveRapidApiHost: validatedEnv.BRAVE_RAPIDAPI_HOST || process.env.BRAVE_RAPIDAPI_HOST || '',
+  serpApiKey: validatedEnv.SERPAPI_KEY || process.env.SERPAPI_KEY || '',
   
   // Application
-  appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  appUrl: validatedEnv.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   appName: process.env.NEXT_PUBLIC_APP_NAME || 'EvaSearchGPT',
   version: process.env.NEXT_PUBLIC_VERSION || '1.0.0',
   
@@ -52,9 +65,7 @@ export const config = {
   },
 };
 
-// Validate configuration in production
-if (process.env.NODE_ENV === 'production') {
-  validateEnv();
-}
+// Don't validate during build time to avoid errors
+// Runtime validation happens in API routes when needed
 
 export default config;

@@ -2,14 +2,22 @@ import { z } from 'zod';
 
 // Environment validation schema
 export const envSchema = z.object({
+  GEMINI_API_KEY: z.string().optional(),
+  BRAVE_RAPIDAPI_KEY: z.string().optional(), 
+  BRAVE_RAPIDAPI_HOST: z.string().optional(),
+  SERPAPI_KEY: z.string().optional(),
+  NEXT_PUBLIC_APP_URL: z.string().optional(),
+  SEARCH_TIMEOUT: z.string().transform(Number).default('10000'),
+  MAX_RESULTS_PER_SOURCE: z.string().transform(Number).default('10'),
+  CACHE_DURATION: z.string().transform(Number).default('3600'),
+});
+
+// Runtime API validation (stricter validation for API routes)
+export const runtimeEnvSchema = z.object({
   GEMINI_API_KEY: z.string().min(1, 'Gemini API key is required'),
   BRAVE_RAPIDAPI_KEY: z.string().min(1, 'Brave RapidAPI key is required'),
   BRAVE_RAPIDAPI_HOST: z.string().min(1, 'Brave RapidAPI host is required'),
   SERPAPI_KEY: z.string().min(1, 'SerpAPI key is required'),
-  NEXT_PUBLIC_APP_URL: z.string().url(),
-  SEARCH_TIMEOUT: z.string().transform(Number).default('10000'),
-  MAX_RESULTS_PER_SOURCE: z.string().transform(Number).default('10'),
-  CACHE_DURATION: z.string().transform(Number).default('3600'),
 });
 
 // Search query validation
