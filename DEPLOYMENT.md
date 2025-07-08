@@ -25,7 +25,8 @@ Set these in your Vercel dashboard:
 
 ```env
 GEMINI_API_KEY=your_google_ai_api_key
-BRAVE_API_KEY=your_brave_search_api_key
+BRAVE_RAPIDAPI_KEY=your_brave_search_api_key
+BRAVE_RAPIDAPI_HOST=brave-web-search.p.rapidapi.com
 SERPAPI_KEY=your_serpapi_key
 NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
 NODE_ENV=production

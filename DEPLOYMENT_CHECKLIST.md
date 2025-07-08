@@ -46,7 +46,8 @@ Set these in Vercel dashboard or via CLI:
 ```bash
 # Required API Keys
 GEMINI_API_KEY=your_google_ai_api_key
-BRAVE_API_KEY=your_brave_search_api_key  
+BRAVE_RAPIDAPI_KEY=your_brave_search_api_key
+BRAVE_RAPIDAPI_HOST=brave-web-search.p.rapidapi.com
 SERPAPI_KEY=your_serpapi_key
 
 # App Configuration
@@ -68,6 +69,7 @@ vercel --prod
 
 #### Health Checks
 - [ ] `https://your-domain.vercel.app/api/health` returns 200
+- [ ] `https://your-domain.vercel.app/api/config` shows all API keys as "Configured"
 - [ ] `https://your-domain.vercel.app/api/analytics` returns data
 - [ ] Main search functionality works
 - [ ] Analytics dashboard loads correctly

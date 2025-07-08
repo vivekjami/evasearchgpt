@@ -51,7 +51,18 @@ export default function SearchInterface() {
       });
       
       if (!response.ok) {
-        throw new Error(`Search failed with status: ${response.status}`);
+        // Try to get more detailed error information from the response
+        let errorDetail = '';
+        try {
+          const errorResponse = await response.json();
+          errorDetail = errorResponse.details || errorResponse.error || '';
+        } catch (e) {
+          // Ignore JSON parse errors
+        }
+        
+        throw new Error(
+          `Search failed with status: ${response.status}${errorDetail ? ` - ${errorDetail}` : ''}`
+        );
       }
       
       const data: AIResponse = await response.json();
@@ -81,6 +92,14 @@ export default function SearchInterface() {
       let errorMessage = 'Sorry, I encountered an error while processing your request. Please try again.';
       if (error instanceof Error) {
         errorMessage = `Error: ${error.message}`;
+        
+        // Add troubleshooting information for 500 errors
+        if (error.message.includes('500')) {
+          errorMessage += '\n\nTroubleshooting: This might be caused by missing API keys on the server. Please check if all API keys are correctly set in the environment variables.';
+          
+          // Add link to the config endpoint
+          errorMessage += '\n\nYou can check API configuration status at: /api/config or /api/healthcheck';
+        }
       } else if (typeof error === 'string') {
         errorMessage = `Error: ${error}`;
       }
