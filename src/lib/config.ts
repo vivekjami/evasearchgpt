@@ -13,6 +13,9 @@ function validateEnv() {
       MAX_RESULTS_PER_SOURCE: process.env.MAX_RESULTS_PER_SOURCE,
       CACHE_DURATION: process.env.CACHE_DURATION,
       USE_SIMPLIFIED_PROMPT: process.env.USE_SIMPLIFIED_PROMPT,
+      ENABLE_DETAILED_RESPONSES: process.env.ENABLE_DETAILED_RESPONSES,
+      FORCE_COMPREHENSIVE_RESPONSES: process.env.FORCE_COMPREHENSIVE_RESPONSES,
+      MIN_RESPONSE_LENGTH: process.env.MIN_RESPONSE_LENGTH,
       GEMINI_MODEL: process.env.GEMINI_MODEL,
       GEMINI_MAX_TOKENS: process.env.GEMINI_MAX_TOKENS,
     });
@@ -29,8 +32,11 @@ function validateEnv() {
       MAX_RESULTS_PER_SOURCE: 10,
       CACHE_DURATION: 3600,
       USE_SIMPLIFIED_PROMPT: false,
+      ENABLE_DETAILED_RESPONSES: true,
+      FORCE_COMPREHENSIVE_RESPONSES: true,
+      MIN_RESPONSE_LENGTH: 800,
       GEMINI_MODEL: 'gemini-2.5-pro',
-      GEMINI_MAX_TOKENS: 1000,
+      GEMINI_MAX_TOKENS: 4000,
     };
   }
 }
@@ -57,8 +63,11 @@ export const config = {
   
   // AI configuration
   useSimplifiedPrompt: validatedEnv.USE_SIMPLIFIED_PROMPT || false,
+  enableDetailedResponses: validatedEnv.ENABLE_DETAILED_RESPONSES || true,
+  forceComprehensiveResponses: validatedEnv.FORCE_COMPREHENSIVE_RESPONSES || true,
+  minResponseLength: validatedEnv.MIN_RESPONSE_LENGTH || 800,
   geminiModel: validatedEnv.GEMINI_MODEL || 'gemini-2.5-pro',
-  geminiMaxTokens: validatedEnv.GEMINI_MAX_TOKENS || 1000,
+  geminiMaxTokens: validatedEnv.GEMINI_MAX_TOKENS || 4000,
   
   // Rate limiting
   rateLimits: {

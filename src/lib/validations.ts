@@ -14,11 +14,23 @@ export const envSchema = z.object({
     z.string().transform(val => val === 'true'),
     z.boolean()
   ]).default(false),
+  ENABLE_DETAILED_RESPONSES: z.union([
+    z.string().transform(val => val === 'true'),
+    z.boolean()
+  ]).default(true),
+  FORCE_COMPREHENSIVE_RESPONSES: z.union([
+    z.string().transform(val => val === 'true'),
+    z.boolean()
+  ]).default(true),
+  MIN_RESPONSE_LENGTH: z.union([
+    z.string().transform(Number),
+    z.number()
+  ]).default(800),
   GEMINI_MODEL: z.string().default('gemini-2.5-pro'),
   GEMINI_MAX_TOKENS: z.union([
     z.string().transform(Number),
     z.number()
-  ]).default(1000),
+  ]).default(4000),
 });
 
 // Runtime API validation (stricter validation for API routes)

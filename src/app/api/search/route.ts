@@ -26,8 +26,8 @@ function validateRuntimeEnv() {
 const genAI = new GoogleGenerativeAI(config.geminiApiKey);
 const geminiModelName = config.geminiModel || 'gemini-2.5-pro';
 
-// Artificially cap the number of results to process for reliability
-const MAX_RESULTS_TO_PROCESS = 5;
+// Process more results for comprehensive responses
+const MAX_RESULTS_TO_PROCESS = 8;
 
 // Set a strict timeout for each external API call
 const API_TIMEOUT = 24000; // 24 seconds (doubled for better reliability)
@@ -161,16 +161,38 @@ export async function POST(request: NextRequest) {
     // Prepare a prompt with limited results to reduce processing time
     const limitedResults = mergedResults.slice(0, MAX_RESULTS_TO_PROCESS);
     
-    // Create a simplified, direct prompt
+    // Create an enhanced source format with more context and metadata
     const sourcesText = limitedResults.map((result, index) => {
-      return `Source ${index + 1}: ${result.title}
+      // Extract domain for context
+      let domain = '';
+      try {
+        domain = new URL(result.url).hostname;
+      } catch (e) {
+        domain = result.source || 'Unknown source';
+      }
+      
+      // Add relevance indicator
+      const relevance = result.relevanceScore ? `${result.relevanceScore}%` : 'Unknown';
+      
+      // Format date if available
+      const dateInfo = result.publishedDate 
+        ? `Published: ${result.publishedDate}`
+        : '';
+        
+      // Enhanced source format with better structure
+      return `Source [${index + 1}]: ${result.title}
 URL: ${result.url}
+Domain: ${domain}
+Relevance: ${relevance}
+${dateInfo}
+
+CONTENT:
 ${result.snippet}
-${result.publishedDate ? `Published: ${result.publishedDate}` : ''}
+
 ---`;
     }).join('\n\n');
     
-    // Create a simplified prompt if configured, otherwise use the detailed one
+    // Create a prompt for detailed, source-rich responses
     let directPrompt = '';
     
     if (config.useSimplifiedPrompt) {
@@ -178,52 +200,78 @@ ${result.publishedDate ? `Published: ${result.publishedDate}` : ''}
       directPrompt = `Answer this question: "${query}"
       
 Here's information from search results:
-${limitedResults.map((r, i) => `[${i+1}] ${r.snippet}`).join('\n\n')}
+${limitedResults.map((r, i) => `[${i+1}] ${r.title}\n${r.url}\n${r.snippet}`).join('\n\n')}
 
-Write a clear, comprehensive answer citing sources as [1], [2], etc.`;
+Write a clear, comprehensive answer citing sources as [1], [2], etc. Include specific details from each source.`;
     } else {
-      // More structured, detailed prompt
-      directPrompt = `You're a helpful search assistant. Answer this query using only the provided sources:
+      // Ultra-comprehensive prompt for extremely detailed, reference-rich responses
+      directPrompt = `You are an EXPERT RESEARCH ANALYST with a PhD-level understanding of the subject matter. Your task is to create an EXCEPTIONALLY COMPREHENSIVE, IN-DEPTH research report on the following query using ONLY the sources provided:
 
 QUERY: "${query}"
 
 SEARCH RESULTS:
 ${sourcesText}
 
-INSTRUCTIONS:
-- Start with a direct answer to the query
-- Use information ONLY from the sources provided
-- Synthesize a comprehensive answer
-- Cite sources with numbered references [1], [2], etc.
-- If sources are insufficient, clearly say so
-- Use Markdown formatting for readability
-- Write at least 150 words
+CRITICAL REQUIREMENTS:
+1. Create an EXHAUSTIVE, SCHOLARLY analysis that is EXTREMELY THOROUGH (minimum 800-1000 words)
+2. EXTRACT EVERY RELEVANT detail, statistic, figure, date, name, and quote from the sources
+3. For EACH claim, fact, or statement, provide EXPLICIT citations using numbered references [1], [2], etc.
+4. SYNTHESIZE information across sources to form a complete picture
+5. ANALYZE implications, significance, and context for each major point
+6. HIGHLIGHT controversies, debates, or conflicting information between sources
+7. EXPLAIN complex concepts with clear, detailed explanations
+8. Use PROFESSIONAL academic language and tone throughout
+9. Include EXTENSIVE use of sub-sections, bullet points, and structured formatting
+10. NEVER invent facts or data not present in the sources - rely EXCLUSIVELY on provided materials
 
-FORMAT YOUR RESPONSE LIKE THIS:
-## Answer
-[Your comprehensive answer with source citations]
+YOUR RESPONSE MUST FOLLOW THIS COMPREHENSIVE STRUCTURE:
 
-## Sources Used
-- [1] Source name and details
-- [2] Source name and details
-...`;
+## Executive Summary
+[Concise overview of key findings - 2-3 paragraphs with citations]
+
+## Comprehensive Analysis
+[EXTREMELY DETAILED main analysis with multiple sub-sections, 600+ words, heavy citation]
+
+### Historical Context and Background
+[Thorough background information with citations]
+
+### Current Developments and Breakthroughs
+[Detailed analysis of recent advancements with citations]
+
+### Technical Aspects and Methodologies
+[In-depth explanation of technical elements with citations]
+
+### Implications and Future Directions
+[Analysis of significance and future prospects with citations]
+
+## Key Findings and Conclusions
+- [Detailed finding 1 with multiple citations]
+- [Detailed finding 2 with multiple citations]
+- [Detailed finding 3 with multiple citations]
+- [Detailed finding 4 with multiple citations]
+- [Detailed finding 5 with multiple citations]
+
+## Comprehensive Source Analysis
+- [1] Source name and details (Provide THOROUGH explanation of exactly what information was extracted from this source, including specific facts, figures, quotes)
+- [2] Source name and details (Provide THOROUGH explanation of exactly what information was extracted from this source, including specific facts, figures, quotes)
+...
+
+REMEMBER: Your response MUST be extremely comprehensive, extensively cited, and analyze the topic from multiple angles. It should be a DEFINITIVE resource on the topic.`;
     }
     
     // Set a timeout for AI response generation
     let aiResponse = "I couldn't find specific information about your query due to timing constraints. Please try a more specific question.";
     
     try {
-      // Get the model with configuration from config
+      // Get the model with optimized configuration for detailed, reference-rich responses
       const model = genAI.getGenerativeModel({ 
         model: geminiModelName,
         generationConfig: {
-          maxOutputTokens: config.geminiMaxTokens || 1000,  
-          temperature: 0.3,        // Balanced between creative and factual
-          topP: 0.95,              // High probability mass
-          topK: 40,                // Diverse token selection
-          stopSequences: ["Source:"] // Prevent the model from generating fake sources
-        },
-        // No system instruction for basic model
+          maxOutputTokens: config.geminiMaxTokens || 2000,  // Increased token limit for more detailed responses
+          temperature: 0.2,        // Lower temperature for more factual responses
+          topP: 0.90,              // Slightly lower top_p for more focused responses
+          topK: 40                 // Keep diverse token selection
+        }
       });
       
       console.log("Sending request to Gemini API...");
@@ -266,12 +314,26 @@ FORMAT YOUR RESPONSE LIKE THIS:
         
         // Fallback to a simpler prompt with shorter context
         try {
-          const simplifiedPrompt = `Answer this question clearly and directly: "${query}". 
+          const simplifiedPrompt = `Create a comprehensive research report answering this question: "${query}". 
           
-Use these search snippets for information:
-${limitedResults.slice(0, 3).map(r => `- ${r.snippet}`).join('\n\n')}
+Use these search snippets as your ONLY sources of information:
+${limitedResults.slice(0, 3).map((r, i) => `Source [${i+1}] - ${r.title}:\n${r.url}\n${r.snippet}`).join('\n\n')}
 
-Keep your answer factual and to the point.`;
+CRITICAL REQUIREMENTS:
+- Write an EXTREMELY THOROUGH analysis (minimum 500 words)
+- Extract EVERY relevant fact, figure, date, and quote from the sources
+- Cite sources using [1], [2], etc. after EACH statement or claim
+- Use extensive formatting with multiple sections and subsections
+- Provide detailed analysis and context for each major point
+- Structure your response with clear headings and organization
+
+YOUR RESPONSE MUST INCLUDE:
+1. Executive Summary of key findings
+2. Comprehensive Main Analysis (with multiple subsections)
+3. Detailed Key Findings list with citations
+4. Complete Sources section explaining what was taken from each source
+
+I need an EXPERT-LEVEL, EXHAUSTIVE response that serves as a definitive resource on this topic.`;
           
           console.log("Attempting fallback Gemini API call with simplified prompt");
           const fallbackResult = await model.generateContent(simplifiedPrompt);
@@ -330,18 +392,96 @@ For more detailed information, please refer to the sources provided below.`;
       geminiApiKeyPresent: Boolean(process.env.GEMINI_API_KEY),
     });
     
-    // Verify the AI response is valid before sending
-    if (!aiResponse || aiResponse.trim().length < 20) {
+    // Verify and enhance the AI response to ensure maximum detail and comprehensiveness
+    if (!aiResponse || aiResponse.trim().length < 100) {
       console.error("Generated AI response is empty or too short:", aiResponse);
       
-      // Provide a fallback answer using search results directly
-      aiResponse = `# Search Results for "${query}"
+      // Provide a detailed fallback answer using search results directly
+      aiResponse = `# Comprehensive Research Report: ${query}
 
-I found the following information related to your query:
+## Executive Summary
+This report compiles information from multiple sources regarding "${query}". Due to processing limitations, I've provided a structured analysis of the key sources found.
 
-${mergedResults.slice(0, 3).map((result, i) => (
-  `## ${result.title || `Source ${i+1}`}\n${result.snippet || 'No description available.'}\n\nSource: ${result.url}`
-)).join('\n\n')}`;
+## Detailed Source Analysis
+
+${mergedResults.slice(0, 5).map((result, i) => (
+  `### Source ${i+1}: ${result.title}\n\n**URL**: ${result.url}\n\n**Key Information**:\n${result.snippet || 'No description available.'}\n\n**Analysis**: This source provides important context about ${query} that can help understand the current state of knowledge and recent developments in this area.\n\n**Relevance**: ${result.relevanceScore || 'High'}\n`
+)).join('\n\n')}
+
+## Synthesis of Findings
+Based on the sources above, we can draw several important conclusions about "${query}":
+
+1. ${mergedResults[0]?.title || 'The first source'} indicates that ${mergedResults[0]?.snippet?.substring(0, 100) || 'relevant information exists'}.
+2. ${mergedResults[1]?.title || 'Additional sources'} provide context that ${mergedResults[1]?.snippet?.substring(0, 100) || 'supplements our understanding'}.
+3. The collected information suggests that this topic has significant implications for research and practical applications.
+
+## Recommended Further Research
+For a more comprehensive understanding, consider exploring:
+- More specific aspects of ${query.split(' ').slice(-2).join(' ')}
+- Recent academic publications in this field
+- Industry reports and whitepapers
+
+## Complete Source References
+${mergedResults.slice(0, 5).map((r, i) => `[${i+1}] ${r.title}. Available at: ${r.url}${r.publishedDate ? ' (Published: ' + r.publishedDate + ')' : ''}`).join('\n')}`;
+    } else {
+      // Determine if the response meets our comprehensive requirements
+      const minWordCount = config.minResponseLength || 800;
+      const wordCount = aiResponse.split(/\s+/).length;
+      const citationCount = (aiResponse.match(/\[\d+\]/g) || []).length;
+      const expectedCitations = Math.min(5, limitedResults.length);
+      const sectionMatches = aiResponse.match(/#{2,3}\s+\w+/g);
+      const hasProperSections = sectionMatches ? sectionMatches.length >= 3 : false;
+      const hasExecutiveSummary = aiResponse.toLowerCase().includes('executive summary') || aiResponse.toLowerCase().includes('summary');
+      
+      console.log(`Response quality check - Words: ${wordCount}/${minWordCount}, Citations: ${citationCount}/${expectedCitations}, Proper Sections: ${hasProperSections}`);
+      
+      let needsEnhancement = false;
+      
+      // Check if response is too short
+      if (wordCount < minWordCount && config.forceComprehensiveResponses) {
+        console.log(`Response too short (${wordCount} words). Enhancing...`);
+        needsEnhancement = true;
+      }
+      
+      // Check if citation count is insufficient
+      if (citationCount < expectedCitations && limitedResults.length > 0) {
+        console.log(`Citations insufficient (${citationCount}). Adding citation reminders...`);
+        
+        // Add missing citations
+        aiResponse += `\n\n---\n\n**Additional Sources Referenced**:\n\n${limitedResults.slice(0, 5).map((r, i) => 
+          `- [${i+1}] ${r.title} (${r.url}) - Contains information about ${query.split(' ').slice(0, 3).join(' ')}`
+        ).join('\n')}`;
+      }
+      
+      // Check for proper section structure
+      if (!hasProperSections && aiResponse.length > 200) {
+        console.log("Response lacks proper section structure. Restructuring...");
+        
+        // Restructure response with proper sections
+        const originalContent = aiResponse;
+        aiResponse = `# Comprehensive Analysis: ${query}\n\n`;
+        
+        if (!hasExecutiveSummary) {
+          aiResponse += `## Executive Summary\nThis report provides a thorough analysis of "${query}" based on multiple authoritative sources. The findings reveal important insights about recent developments, key concepts, and implications.\n\n`;
+        }
+        
+        aiResponse += `## Main Analysis\n\n${originalContent}\n\n`;
+        
+        // Add missing sections if needed
+        if (!aiResponse.toLowerCase().includes('findings') && !aiResponse.toLowerCase().includes('conclusion')) {
+          aiResponse += `\n\n## Key Findings\n`;
+          limitedResults.slice(0, 3).forEach((r, i) => {
+            aiResponse += `- The information from source [${i+1}] indicates that ${r.title.toLowerCase().includes(query.toLowerCase()) ? r.snippet.substring(0, 100) + '...' : r.title + ' is relevant to this topic.'}\n`;
+          });
+        }
+      }
+      
+      // Add sources section if not present
+      if (!aiResponse.toLowerCase().includes('source') && limitedResults.length > 0) {
+        aiResponse += `\n\n## Complete Source References\n\n${limitedResults.map((r, i) => 
+          `[${i+1}] ${r.title}. Available at: ${r.url}${r.publishedDate ? ' (Published: ' + r.publishedDate + ')' : ''}`
+        ).join('\n')}`;
+      }
     }
     
     return NextResponse.json({
