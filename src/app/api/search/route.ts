@@ -205,7 +205,7 @@ ${limitedResults.map((r, i) => `[${i+1}] ${r.title}\n${r.url}\n${r.snippet}`).jo
 Write a clear, comprehensive answer citing sources as [1], [2], etc. Include specific details from each source.`;
     } else {
       // Ultra-comprehensive prompt for extremely detailed, reference-rich responses
-      directPrompt = `You are an EXPERT RESEARCH ANALYST with a PhD-level understanding of the subject matter. Your task is to create an EXCEPTIONALLY COMPREHENSIVE, IN-DEPTH research report on the following query using ONLY the sources provided:
+      directPrompt = `You are a FRIENDLY, KNOWLEDGEABLE EXPERT with a PhD-level understanding of the subject matter. Your task is to create a CONVERSATIONAL yet COMPREHENSIVE answer to the following query using ONLY the sources provided:
 
 QUERY: "${query}"
 
@@ -213,50 +213,52 @@ SEARCH RESULTS:
 ${sourcesText}
 
 CRITICAL REQUIREMENTS:
-1. Create an EXHAUSTIVE, SCHOLARLY analysis that is EXTREMELY THOROUGH (minimum 800-1000 words)
-2. EXTRACT EVERY RELEVANT detail, statistic, figure, date, name, and quote from the sources
+1. Start with a FRIENDLY, CONVERSATIONAL summary written in HUMAN-LIKE language (approx. 150-200 words)
+2. Then provide an EXCEPTIONALLY COMPREHENSIVE, IN-DEPTH research report (minimum 800-1000 words total)
 3. For EACH claim, fact, or statement, provide EXPLICIT citations using numbered references [1], [2], etc.
-4. SYNTHESIZE information across sources to form a complete picture
-5. ANALYZE implications, significance, and context for each major point
-6. HIGHLIGHT controversies, debates, or conflicting information between sources
+4. EXTRACT EVERY RELEVANT detail, statistic, figure, date, name, and quote from the sources
+5. SYNTHESIZE information across sources to form a complete picture
+6. ANALYZE implications, significance, and context for each major point
 7. EXPLAIN complex concepts with clear, detailed explanations
-8. Use PROFESSIONAL academic language and tone throughout
-9. Include EXTENSIVE use of sub-sections, bullet points, and structured formatting
+8. Include EXTENSIVE use of sub-sections, bullet points, and structured formatting
+9. End with a NATURAL, HUMAN-LIKE conclusion with actionable takeaways and personal perspective
 10. NEVER invent facts or data not present in the sources - rely EXCLUSIVELY on provided materials
 
-YOUR RESPONSE MUST FOLLOW THIS COMPREHENSIVE STRUCTURE:
+YOUR RESPONSE MUST FOLLOW THIS STRUCTURE:
 
-## Executive Summary
-[Concise overview of key findings - 2-3 paragraphs with citations]
+## Here's What You Need to Know
+[CONVERSATIONAL, HUMAN-LIKE summary written in a friendly, helpful tone. Include 2-3 key insights with citations, written as if you're explaining to a friend. Use personal pronouns and natural language. Avoid formal academic tone here.]
 
-## Comprehensive Analysis
-[EXTREMELY DETAILED main analysis with multiple sub-sections, 600+ words, heavy citation]
+## Detailed Report
 
-### Historical Context and Background
+### Background and Context
 [Thorough background information with citations]
 
-### Current Developments and Breakthroughs
-[Detailed analysis of recent advancements with citations]
+### Key Developments and Insights
+[Detailed analysis of main points with citations]
 
-### Technical Aspects and Methodologies
-[In-depth explanation of technical elements with citations]
+### Important Considerations
+[Analysis of nuances, debates, or technical aspects with citations]
 
-### Implications and Future Directions
-[Analysis of significance and future prospects with citations]
+### Expert Analysis
+[Synthesis of information with deeper insights and citations]
 
-## Key Findings and Conclusions
-- [Detailed finding 1 with multiple citations]
-- [Detailed finding 2 with multiple citations]
-- [Detailed finding 3 with multiple citations]
-- [Detailed finding 4 with multiple citations]
-- [Detailed finding 5 with multiple citations]
+## Key Takeaways
+- [Clearly explained finding 1 with citations]
+- [Clearly explained finding 2 with citations]
+- [Clearly explained finding 3 with citations]
+- [Clearly explained finding 4 with citations]
+- [Clearly explained finding 5 with citations]
 
-## Comprehensive Source Analysis
-- [1] Source name and details (Provide THOROUGH explanation of exactly what information was extracted from this source, including specific facts, figures, quotes)
-- [2] Source name and details (Provide THOROUGH explanation of exactly what information was extracted from this source, including specific facts, figures, quotes)
+## In Conclusion
+[A NATURAL, CONVERSATIONAL conclusion that summarizes the main points and provides actionable insights or personal perspective. Write like a helpful human expert would, using warm, approachable language while maintaining authority. 1-2 paragraphs.]
+
+## Sources Referenced
+- [1] Source name and details
+- [2] Source name and details
 ...
 
-REMEMBER: Your response MUST be extremely comprehensive, extensively cited, and analyze the topic from multiple angles. It should be a DEFINITIVE resource on the topic.`;
+REMEMBER: Your response must begin and end in a FRIENDLY, CONVERSATIONAL tone like a helpful human expert would use, while the middle detailed report section should be COMPREHENSIVE, extensively cited, and analyze the topic from multiple angles.`;
     }
     
     // Set a timeout for AI response generation
@@ -314,26 +316,29 @@ REMEMBER: Your response MUST be extremely comprehensive, extensively cited, and 
         
         // Fallback to a simpler prompt with shorter context
         try {
-          const simplifiedPrompt = `Create a comprehensive research report answering this question: "${query}". 
+          const simplifiedPrompt = `Answer this question in a friendly, conversational way while providing comprehensive information: "${query}". 
           
 Use these search snippets as your ONLY sources of information:
 ${limitedResults.slice(0, 3).map((r, i) => `Source [${i+1}] - ${r.title}:\n${r.url}\n${r.snippet}`).join('\n\n')}
 
 CRITICAL REQUIREMENTS:
-- Write an EXTREMELY THOROUGH analysis (minimum 500 words)
-- Extract EVERY relevant fact, figure, date, and quote from the sources
+- Start with a FRIENDLY, CONVERSATIONAL summary (about 150 words)
+- Then provide a THOROUGH analysis (minimum 500 words total)
+- Extract all relevant facts, figures, dates, and quotes from the sources
 - Cite sources using [1], [2], etc. after EACH statement or claim
-- Use extensive formatting with multiple sections and subsections
-- Provide detailed analysis and context for each major point
-- Structure your response with clear headings and organization
+- Use formatting with sections and subsections
+- Provide detailed analysis and context for major points
+- End with a natural, conversational conclusion
+- Never invent facts not present in the sources
 
 YOUR RESPONSE MUST INCLUDE:
-1. Executive Summary of key findings
-2. Comprehensive Main Analysis (with multiple subsections)
-3. Detailed Key Findings list with citations
-4. Complete Sources section explaining what was taken from each source
+1. "Here's What You Need to Know" - a friendly, conversational summary
+2. Detailed Report (with multiple subsections)
+3. Key Takeaways with citations
+4. A conversational conclusion with personal perspective
+5. Complete Sources section
 
-I need an EXPERT-LEVEL, EXHAUSTIVE response that serves as a definitive resource on this topic.`;
+Write like a helpful human expert would, using warm, approachable language while still providing thorough information.`;
           
           console.log("Attempting fallback Gemini API call with simplified prompt");
           const fallbackResult = await model.generateContent(simplifiedPrompt);
@@ -397,31 +402,33 @@ For more detailed information, please refer to the sources provided below.`;
       console.error("Generated AI response is empty or too short:", aiResponse);
       
       // Provide a detailed fallback answer using search results directly
-      aiResponse = `# Comprehensive Research Report: ${query}
+      aiResponse = `# ${query}: What You Need to Know
 
-## Executive Summary
-This report compiles information from multiple sources regarding "${query}". Due to processing limitations, I've provided a structured analysis of the key sources found.
+## Here's What You Need to Know
+I've looked into "${query}" for you and found some helpful information! Based on the sources I've found, this is a topic with several important aspects worth understanding. While I couldn't generate a complete AI analysis, I've gathered the key information from reliable sources to help you get a good understanding of the topic.
 
-## Detailed Source Analysis
+## Detailed Information from Sources
 
 ${mergedResults.slice(0, 5).map((result, i) => (
-  `### Source ${i+1}: ${result.title}\n\n**URL**: ${result.url}\n\n**Key Information**:\n${result.snippet || 'No description available.'}\n\n**Analysis**: This source provides important context about ${query} that can help understand the current state of knowledge and recent developments in this area.\n\n**Relevance**: ${result.relevanceScore || 'High'}\n`
+  `### Source ${i+1}: ${result.title}\n\n**URL**: ${result.url}\n\n**Key Information**:\n${result.snippet || 'No description available.'}\n\n**Why This Matters**: This source helps us understand ${query} by providing context about ${result.snippet?.substring(0, 80) || 'relevant aspects of the topic'}.\n`
 )).join('\n\n')}
 
-## Synthesis of Findings
-Based on the sources above, we can draw several important conclusions about "${query}":
+## Main Insights
+From what I've found, here are the key points about "${query}":
 
-1. ${mergedResults[0]?.title || 'The first source'} indicates that ${mergedResults[0]?.snippet?.substring(0, 100) || 'relevant information exists'}.
-2. ${mergedResults[1]?.title || 'Additional sources'} provide context that ${mergedResults[1]?.snippet?.substring(0, 100) || 'supplements our understanding'}.
-3. The collected information suggests that this topic has significant implications for research and practical applications.
+1. ${mergedResults[0]?.title || 'The first source'} shows that ${mergedResults[0]?.snippet?.substring(0, 100) || 'there is relevant information available'}.
+2. ${mergedResults[1]?.title || 'Additional sources'} suggest that ${mergedResults[1]?.snippet?.substring(0, 100) || 'there are multiple aspects to consider'}.
+3. Looking at all the sources together, it seems this topic has practical implications that could be valuable for you to explore further.
 
-## Recommended Further Research
-For a more comprehensive understanding, consider exploring:
-- More specific aspects of ${query.split(' ').slice(-2).join(' ')}
-- Recent academic publications in this field
-- Industry reports and whitepapers
+## What This Means For You
+Based on what I've found, you might want to explore:
+- More about ${query.split(' ').slice(-2).join(' ')}
+- Related topics mentioned in the sources
+- Practical applications in your specific context
 
-## Complete Source References
+I hope this helps with your question! Feel free to ask me to explore any specific aspect in more detail.
+
+## Sources
 ${mergedResults.slice(0, 5).map((r, i) => `[${i+1}] ${r.title}. Available at: ${r.url}${r.publishedDate ? ' (Published: ' + r.publishedDate + ')' : ''}`).join('\n')}`;
     } else {
       // Determine if the response meets our comprehensive requirements
@@ -447,9 +454,9 @@ ${mergedResults.slice(0, 5).map((r, i) => `[${i+1}] ${r.title}. Available at: ${
       if (citationCount < expectedCitations && limitedResults.length > 0) {
         console.log(`Citations insufficient (${citationCount}). Adding citation reminders...`);
         
-        // Add missing citations
-        aiResponse += `\n\n---\n\n**Additional Sources Referenced**:\n\n${limitedResults.slice(0, 5).map((r, i) => 
-          `- [${i+1}] ${r.title} (${r.url}) - Contains information about ${query.split(' ').slice(0, 3).join(' ')}`
+        // Add missing citations with a conversational note
+        aiResponse += `\n\n## Additional Sources I Found Helpful\n\nI also referenced these additional sources that provided valuable context on "${query}":\n\n${limitedResults.slice(0, 5).map((r, i) => 
+          `- [${i+1}] ${r.title} (${r.url}) - This helped me understand ${query.split(' ').slice(0, 3).join(' ')} from ${r.source || 'a reliable source'}`
         ).join('\n')}`;
       }
       
@@ -457,28 +464,31 @@ ${mergedResults.slice(0, 5).map((r, i) => `[${i+1}] ${r.title}. Available at: ${
       if (!hasProperSections && aiResponse.length > 200) {
         console.log("Response lacks proper section structure. Restructuring...");
         
-        // Restructure response with proper sections
+        // Restructure response with proper sections and conversational tone
         const originalContent = aiResponse;
-        aiResponse = `# Comprehensive Analysis: ${query}\n\n`;
+        aiResponse = `# ${query}: What You Need to Know\n\n`;
         
         if (!hasExecutiveSummary) {
-          aiResponse += `## Executive Summary\nThis report provides a thorough analysis of "${query}" based on multiple authoritative sources. The findings reveal important insights about recent developments, key concepts, and implications.\n\n`;
+          aiResponse += `## Here's What You Need to Know\nI've researched "${query}" for you and found some interesting insights! Based on multiple reliable sources, I can help you understand the key points about this topic. Here's a friendly overview of what I've found, with all the important details you might want.\n\n`;
         }
         
-        aiResponse += `## Main Analysis\n\n${originalContent}\n\n`;
+        aiResponse += `## Detailed Report\n\n${originalContent}\n\n`;
         
         // Add missing sections if needed
-        if (!aiResponse.toLowerCase().includes('findings') && !aiResponse.toLowerCase().includes('conclusion')) {
-          aiResponse += `\n\n## Key Findings\n`;
+        if (!aiResponse.toLowerCase().includes('findings') && !aiResponse.toLowerCase().includes('conclusion') && !aiResponse.toLowerCase().includes('takeaway')) {
+          aiResponse += `\n\n## Key Takeaways\n`;
           limitedResults.slice(0, 3).forEach((r, i) => {
-            aiResponse += `- The information from source [${i+1}] indicates that ${r.title.toLowerCase().includes(query.toLowerCase()) ? r.snippet.substring(0, 100) + '...' : r.title + ' is relevant to this topic.'}\n`;
+            aiResponse += `- Based on source [${i+1}], ${r.title.toLowerCase().includes(query.toLowerCase()) ? r.snippet.substring(0, 100) + '...' : 'we learn that ' + r.title + ' provides valuable insights into this topic.'}\n`;
           });
+          
+          // Add a conversational conclusion
+          aiResponse += `\n\n## In Conclusion\nAs we've seen from these sources, ${query} is a topic with several interesting dimensions. I hope this information helps you understand it better! If you have any specific aspects you'd like to explore further, feel free to ask more questions about particular details or related topics.`;
         }
       }
       
       // Add sources section if not present
       if (!aiResponse.toLowerCase().includes('source') && limitedResults.length > 0) {
-        aiResponse += `\n\n## Complete Source References\n\n${limitedResults.map((r, i) => 
+        aiResponse += `\n\n## Sources I Referenced\n\nHere are the sources I used to answer your question:\n\n${limitedResults.map((r, i) => 
           `[${i+1}] ${r.title}. Available at: ${r.url}${r.publishedDate ? ' (Published: ' + r.publishedDate + ')' : ''}`
         ).join('\n')}`;
       }

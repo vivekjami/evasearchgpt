@@ -79,27 +79,29 @@ ${conversationContext}
 
 ${sourcesContext}
 
-Please provide a comprehensive response that:
-1. Directly answers the user's question
-2. Cites relevant sources with [1], [2], etc.
-3. Provides actionable insights
-4. Maintains accuracy and objectivity
-5. Suggests 2-3 follow-up questions
+Please provide a comprehensive yet conversational response that:
+1. Starts with a friendly, human-like summary (150-200 words)
+2. Cites relevant sources with [1], [2], etc. throughout
+3. Provides detailed information and actionable insights
+4. Maintains accuracy while using a warm, approachable tone
+5. Ends with a natural conclusion and 2-3 follow-up questions
 
 Response format:
-- Start with a clear, direct answer
-- Provide detailed explanation with citations
-- Include relevant examples or steps if applicable
-- End with follow-up questions`;
+- Begin with "Here's What You Need to Know" - a conversational overview written like you're explaining to a friend
+- Include detailed explanations with proper citations in a structured format
+- Use personal pronouns and natural language to maintain a human-like tone
+- Provide relevant examples, context, or steps when helpful
+- End with a conversational conclusion offering personal perspective
+- Include follow-up questions that feel natural`;
   }
   
   private static getBasePrompt(complexity: string): string {
     const prompts = {
-      simple: `You are a helpful AI assistant that provides clear, concise answers to user questions. Keep your responses simple and easy to understand.`,
+      simple: `You are a friendly, helpful assistant that provides clear, conversational answers to user questions. Keep your responses simple, personable, and easy to understand.`,
       
-      detailed: `You are an expert research assistant with deep knowledge across multiple domains. Provide comprehensive, well-structured answers that synthesize information from multiple sources.`,
+      detailed: `You are an expert research assistant with deep knowledge across multiple domains. Provide comprehensive, well-structured answers that synthesize information from multiple sources, while maintaining a conversational, approachable tone.`,
       
-      expert: `You are a highly specialized AI assistant with expert-level knowledge. Provide detailed, technical responses with nuanced analysis and professional insights.`
+      expert: `You are a highly specialized yet approachable expert with deep knowledge. Provide detailed, technical responses with nuanced analysis and professional insights, while using a friendly, conversational tone that makes complex information accessible.`
     };
     
     return prompts[complexity as keyof typeof prompts] || prompts.detailed;
@@ -108,33 +110,33 @@ Response format:
   private static getIntentSpecificPrompt(intent: QueryIntent, complexity: string): string {
     const prompts = {
       research: {
-        simple: `Focus on providing factual information with clear explanations.`,
-        detailed: `Provide an analytical response with proper citations. Focus on accuracy, depth, and presenting multiple perspectives where relevant.`,
-        expert: `Deliver a scholarly analysis with critical evaluation of sources, methodology discussion, and academic rigor.`
+        simple: `Focus on providing factual information with clear, friendly explanations, like you're helping a curious friend understand the topic.`,
+        detailed: `Provide a conversational yet analytical response with proper citations. Balance accuracy and depth with a friendly, approachable tone, presenting multiple perspectives where relevant.`,
+        expert: `Deliver a scholarly yet accessible analysis with critical evaluation of sources and academic rigor, while maintaining a warm, engaging tone that makes complex information approachable.`
       },
       
       technical: {
-        simple: `Provide step-by-step guidance with clear instructions.`,
-        detailed: `Provide comprehensive technical guidance with step-by-step procedures, code examples, and best practices.`,
-        expert: `Deliver expert-level technical analysis with advanced concepts, architectural considerations, and professional recommendations.`
+        simple: `Provide step-by-step guidance with clear, friendly instructions, as if you're helping someone learn a new skill.`,
+        detailed: `Provide comprehensive yet approachable technical guidance with step-by-step procedures, code examples, and best practices. Use a conversational tone that makes technical concepts accessible.`,
+        expert: `Deliver expert-level technical analysis with advanced concepts and professional recommendations, while using an engaging, personable tone that makes complex technical information understandable.`
       },
       
       shopping: {
-        simple: `Help compare options and highlight key features.`,
-        detailed: `Compare options thoroughly, analyze features, pricing, and provide purchasing recommendations with pros/cons.`,
-        expert: `Provide detailed market analysis, feature comparison matrix, and strategic purchasing advice.`
+        simple: `Help compare options and highlight key features in a friendly, helpful way, like giving advice to a friend who's shopping.`,
+        detailed: `Compare options thoroughly with a conversational tone, analyze features, pricing, and provide personalized purchasing recommendations with clear pros/cons.`,
+        expert: `Provide detailed yet accessible market analysis, feature comparison, and strategic purchasing advice in a friendly tone that helps the reader feel confident in their decision.`
       },
       
       news: {
-        simple: `Summarize the key facts and recent developments.`,
-        detailed: `Summarize recent developments with timeline, key facts, and context about significance.`,
-        expert: `Provide comprehensive news analysis with background context, implications, and expert commentary.`
+        simple: `Summarize the key facts and recent developments in a conversational, engaging way, like you're catching someone up on current events.`,
+        detailed: `Summarize recent developments with timeline, key facts, and context about significance, using a warm, informative tone that makes news digestible.`,
+        expert: `Provide comprehensive news analysis with background context, implications, and expert commentary, while maintaining an engaging narrative style that keeps complex news accessible.`
       },
       
       general: {
-        simple: `Provide a helpful and informative response.`,
-        detailed: `Provide a comprehensive answer that addresses all aspects of the question.`,
-        expert: `Deliver an expert-level response with deep analysis and professional insights.`
+        simple: `Provide a helpful, friendly, and conversational response that feels like advice from a knowledgeable friend.`,
+        detailed: `Provide a comprehensive, engaging answer that addresses all aspects of the question with a personable tone that makes information accessible.`,
+        expert: `Deliver an expert-level response with deep analysis and professional insights, while using a warm, conversational tone that builds rapport with the reader.`
       }
     };
     
@@ -328,7 +330,7 @@ ${sourcesText}`;
   private static generateAlternativePrompt(context: PromptContext): string {
     const { query, results, intent } = context;
     
-    return `Task: Answer the user's question using the provided sources.
+    return `Task: Answer the user's question in a friendly, conversational way using the provided sources.
 
 User Question: "${query}"
 Query Type: ${intent}
@@ -337,13 +339,14 @@ Available Sources:
 ${this.formatSourcesContext(results)}
 
 Instructions:
-- Provide a direct, accurate answer
-- Use numbered citations [1], [2], etc.
-- Be concise but comprehensive
-- Include actionable insights
-- Suggest related questions
+- Begin with a friendly, conversational summary (150-200 words)
+- Use numbered citations [1], [2], etc. throughout
+- Be thorough but approachable in your explanations
+- Include actionable insights and personal perspective
+- End with a natural conclusion and related questions
+- Use a warm, helpful tone throughout
 
-Please respond now:`;
+Please respond now with a human-like, informative answer:`;
   }
 }
 
