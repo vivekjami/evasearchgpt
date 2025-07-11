@@ -89,7 +89,7 @@ Traditional search gives you links. EvaSearchGPT gives you **answers**. By fusin
 - **SerpAPI** (Free tier)
 - **Bing Search API** (Free tier)
 
-### 🚀 Deployment
+### Deployment
 
 #### Production Deployment (Vercel - Recommended)
 
